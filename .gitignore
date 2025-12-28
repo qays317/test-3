@@ -12,3 +12,6 @@ terraform.tfstate.d/
 .idea/
 *.swp
 *.swo
+
+# Docker Image
+docker-image
