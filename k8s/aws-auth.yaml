@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-auth
+  namespace: kube-system
+data:
+  mapRoles: |
+    - rolearn: arn:aws:iam::ACCOUNT_ID:role/kubernetes-app-deploy-ci-role
+      username: github-actions
+      groups:
+        - app-deployers
