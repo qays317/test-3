@@ -6,3 +6,9 @@
 .terraform/
 .terraform.lock.hcl
 terraform.tfstate.d/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
