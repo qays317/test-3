@@ -44,11 +44,11 @@ resource "aws_iam_role_policy_attachment" "terraform_admin" {
 
 
 //=================================================================================================================
-// kubernetes-app-deploy-ci-role
+// kubernetes-deploy-app-ci-role
 //=================================================================================================================
 
 resource "aws_iam_role" "deploy_app_ci" {
-  name = "kubernetes-app-deploy-ci-role"
+  name = "kubernetes-deploy-app-ci-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -90,3 +90,5 @@ resource "aws_iam_role_policy_attachment" "deploy_app_attach" {
   role = aws_iam_role.deploy_app_ci.name
   policy_arn = aws_iam_policy.deploy_app_policy.arn
 }
+
+
