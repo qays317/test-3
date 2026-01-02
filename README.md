@@ -50,3 +50,12 @@ I mapped the GitHub Actions IAM role to a dedicated Kubernetes group and bound i
 
 
 
+
+
+
+Prometheus
+
+Prometheus discovers targets via Kubernetes API,
+but scrapes metrics directly from HTTP endpoints exposed by each component.
+
+“Persistent storage is intentionally omitted in this project to keep the focus on architecture, security, and observability design. In production, Prometheus would be backed by persistent volumes or long-term storage solutions such as Thanos.”
