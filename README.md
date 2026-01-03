@@ -59,3 +59,5 @@ Prometheus discovers targets via Kubernetes API,
 but scrapes metrics directly from HTTP endpoints exposed by each component.
 
 “Persistent storage is intentionally omitted in this project to keep the focus on architecture, security, and observability design. In production, Prometheus would be backed by persistent volumes or long-term storage solutions such as Thanos.”
+
+“We use Prometheus Operator because Kubernetes is declarative and dynamic, and Operator keeps Prometheus configuration in sync with cluster state.”

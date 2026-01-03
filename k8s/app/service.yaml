@@ -3,12 +3,12 @@ kind: Service
 metadata:
   name: flask-service
   labels:
-    app: flask-app
+    app: flask
 spec:
   type: ClusterIP
   selector:
-    app: flask-app
+    app: flask
   ports:
     - name: http
       port: 80
-      targetPort: http
+      targetPort: 8080

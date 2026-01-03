@@ -1,0 +1,40 @@
+# ------------------------
+# Global
+# ------------------------
+namespaceOverride: monitoring
+
+# ------------------------
+# Prometheus
+# ------------------------
+prometheus:
+  prometheusSpec:
+    replicas: 1   # intentionally 1 (documented tradeoff)
+    retention: 12h
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+
+# ------------------------
+# Grafana
+# ------------------------
+grafana:
+  enabled: true
+  adminPassword: admin
+  defaultDashboardsEnabled: true
+
+# ------------------------
+# Alertmanager
+# ------------------------
+alertmanager:
+  enabled: true
+
+# ------------------------
+# Node exporter
+# ------------------------
+nodeExporter:
+  enabled: true
+
+# ------------------------
+# kube-state-metrics
+# ------------------------
+kubeStateMetrics:
+  enabled: true
