@@ -44,6 +44,26 @@ resource "aws_iam_role_policy_attachment" "ci_infra_admin" {
 
 
 //=================================================================================================================
+// eks_cluster_access
+//=================================================================================================================
+
+resource "aws_iam_policy" "eks_cluster_access" {
+  name = "eks-cluster-access-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = ["eks:DescribeCluster"]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+
+//=================================================================================================================
 // kubernetes-deploy-app-ci-role
 //=================================================================================================================
 
@@ -69,26 +89,9 @@ resource "aws_iam_role" "ci_app" {
   })
 }
 
-resource "aws_iam_policy" "ci_app_policy" {
-  name = "kubernetes-ci-app-policy"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "eks:DescribeCluster"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-}
-
 resource "aws_iam_role_policy_attachment" "ci_app_attach" {
   role = aws_iam_role.ci_app.name
-  policy_arn = aws_iam_policy.ci_app_policy.arn
+  policy_arn = aws_iam_policy.eks_cluster_access.arn
 }
 
 
@@ -118,24 +121,7 @@ resource "aws_iam_role" "ci_monitoring" {
   })
 }
 
-resource "aws_iam_policy" "ci_monitoring_policy" {
-  name = "kubernetes-ci-monitoring-policy"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "eks:DescribeCluster"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-}
-
 resource "aws_iam_role_policy_attachment" "ci_monitoring_attach" {
   role = aws_iam_role.ci_monitoring.name
-  policy_arn = aws_iam_policy.ci_monitoring_policy.arn
+  policy_arn = aws_iam_policy.eks_cluster_access.arn
 }

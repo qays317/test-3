@@ -1,9 +1,6 @@
 name: Deploy Application
 
 on:
-  push:
-    paths:
-      - k8s/**
   workflow_dispatch:
 
 env:

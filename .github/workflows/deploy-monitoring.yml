@@ -1,9 +1,6 @@
 name: Deploy Monitoring
 
 on:
-  push:
-    paths:
-      - monitoring/**
   workflow_dispatch:
 
 env:
@@ -11,7 +8,7 @@ env:
   CLUSTER_NAME: eks-cluster
 
 jobs:
-  deploy-app:
+  deploy-monitoring:
     runs-on: ubuntu-latest
 
     permissions:
@@ -36,7 +33,7 @@ jobs:
       # 4. Create monitoring namespace
       - name: Create monitoring namespace
         run: |
-          kubectl apply -f monitoring/namespace.yaml
+          kubectl apply -f k8s/monitoring/namespace.yaml
       # 5. Install Helm
       - name: Install Helm
         uses: azure/setup-helm@v4
@@ -52,7 +49,10 @@ jobs:
             prometheus-community/kube-prometheus-stack \
             --namespace monitoring \
             --create-namespace \
-            -f monitoring/values.yaml
-      # 8. Apply alerts
+            -f k8s/monitoring/values.yaml
+      # 8. ServiceMonitoring
+      - name: Apply ServiceMonitors
+        run: kubectl apply -f k8s/monitoring/servicemonitors/
+      # 9. Apply alerts
       - name: Apply alert rules
-        run: kubectl apply -f monitoring/alerts/
+        run: kubectl apply -f k8s/monitoring/alerts/

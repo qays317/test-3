@@ -22,8 +22,9 @@ Role (namespace-scoped, limited)
 kubectl apply works
 
 
-
-
+Bootstrap IAM role 
+“We use a shared IAM policy for EKS authentication
+and enforce all authorization boundaries at the Kubernetes RBAC layer.”
 
 RBAC:
 

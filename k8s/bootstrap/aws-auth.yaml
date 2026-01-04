@@ -5,12 +5,20 @@ metadata:
   namespace: kube-system
 data:
   mapRoles: |
+    # INFRA / CLUSTER ADMIN
+    - rolearn: arn:aws:iam::ACCOUNT_ID:role/kubernetes-ci-infra-role
+      username: ci:infra
+      groups:
+        - system:masters
+
+    # APP DEPLOY
     - rolearn: arn:aws:iam::ACCOUNT_ID:role/kubernetes-ci-app-role
-      username: ci:deploy-app
+      username: ci:app
       groups:
         - app-deployers
 
+    # MONITORING DEPLOY
     - rolearn: arn:aws:iam::ACCOUNT_ID:role/kubernetes-ci-monitoring-role
-      username: ci:deploy-monitoring
+      username: ci:monitoring
       groups:
         - monitoring-admins
