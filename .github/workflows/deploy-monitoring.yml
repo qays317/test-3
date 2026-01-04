@@ -3,7 +3,7 @@ name: Deploy Monitoring
 on:
   push:
     paths:
-      - k8s/monitoring/**
+      - monitoring/**
   workflow_dispatch:
 
 env:
@@ -48,8 +48,11 @@ jobs:
       # 7. Deploy kube-prometheus-stack
       - name: Deploy monitoring stack
         run: |
-          helm upgrade --install kube-prometheus-stack \
+          helm upgrade --install monitoring \
             prometheus-community/kube-prometheus-stack \
             --namespace monitoring \
-            --values monitoring/values.yaml
-          
+            --create-namespace \
+            -f monitoring/values.yaml
+      # 8. Apply alerts
+      - name: Apply alert rules
+        run: kubectl apply -f monitoring/alerts/

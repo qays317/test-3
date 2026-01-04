@@ -8,10 +8,35 @@ namespaceOverride: monitoring
 # ------------------------
 prometheus:
   prometheusSpec:
-    replicas: 1   # intentionally 1 (documented tradeoff)
+    replicas: 1                
     retention: 12h
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
+
+# ------------------------
+# Alertmanager
+# ------------------------
+alertmanager:
+  enabled: true
+  config:
+    global:
+      resolve_timeout: 5m
+
+    route:
+      receiver: slack-notifications
+      group_by: ['alertname', 'namespace']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+
+    receivers:
+      - name: slack-notifications
+        slack_configs:
+          - api_url: "<SLACK_WEBHOOK>"
+            channel: "#alerts"
+            send_resolved: true
+            title: "{{ .CommonAnnotations.summary }}"
+            text: "{{ .CommonAnnotations.description }}"
 
 # ------------------------
 # Grafana
@@ -20,12 +45,6 @@ grafana:
   enabled: true
   adminPassword: admin
   defaultDashboardsEnabled: true
-
-# ------------------------
-# Alertmanager
-# ------------------------
-alertmanager:
-  enabled: true
 
 # ------------------------
 # Node exporter
