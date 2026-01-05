@@ -30,29 +30,25 @@ jobs:
         run: aws eks update-kubeconfig \
                --name $CLUSTER_NAME \
                --region $AWS_REGION
-      # 4. Create monitoring namespace
-      - name: Create monitoring namespace
-        run: |
-          kubectl apply -f k8s/monitoring/namespace.yaml
-      # 5. Install Helm
+      # 4. Install Helm
       - name: Install Helm
         uses: azure/setup-helm@v4
-      # 6. Add Prometheus Helm repository
+      # 5. Add Prometheus Helm repository
       - name: Add Helm repo
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
           helm repo update
-      # 7. Deploy kube-prometheus-stack
+      # 6. Deploy kube-prometheus-stack
       - name: Deploy monitoring stack
         run: |
           helm upgrade --install monitoring \
             prometheus-community/kube-prometheus-stack \
             --namespace monitoring \
             --create-namespace \
-            -f k8s/monitoring/values.yaml
-      # 8. ServiceMonitoring
+            -f monitoring/values.yaml
+      # 7. ServiceMonitoring
       - name: Apply ServiceMonitors
-        run: kubectl apply -f k8s/monitoring/servicemonitors/
-      # 9. Apply alerts
+        run: kubectl apply -f monitoring/servicemonitors/
+      # 8. Apply alerts
       - name: Apply alert rules
-        run: kubectl apply -f k8s/monitoring/alerts/
+        run: kubectl apply -f monitoring/alerts/

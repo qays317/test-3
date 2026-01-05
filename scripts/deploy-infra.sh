@@ -32,6 +32,7 @@ aws eks update-kubeconfig \
 
 # 3. Configure RBAC
 kubectl apply -f k8s/bootstrap/aws-auth.yaml
+kubectl apply -f k8s/bootstrap/namespace.yaml
 kubectl apply -f k8s/rbac/app-role.yaml
 kubectl apply -f k8s/rbac/monitoring-cluster-role.yaml
 kubectl apply -f k8s/rbac/rolebinding.yaml
