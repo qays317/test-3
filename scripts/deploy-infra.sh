@@ -31,10 +31,10 @@ aws eks update-kubeconfig \
   --name $CLUSTER_NAME
 
 # 3. Configure RBAC
-kubectl apply -f k8s/aws-auth.yaml
-kubectl apply -f k8s/rbac/role.yaml
+kubectl apply -f k8s/bootstrap/aws-auth.yaml
+kubectl apply -f k8s/rbac/app-role.yaml
+kubectl apply -f k8s/rbac/monitoring-cluster-role.yaml
 kubectl apply -f k8s/rbac/rolebinding.yaml
-
 
 # 4. Verify
 kubectl get nodes

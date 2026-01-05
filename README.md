@@ -1,16 +1,321 @@
-“TLS termination was intentionally omitted as it was already demonstrated in a previous HA WordPress project using CloudFront and multi-ALB ACM certificates.”
+# Kubernetes Platform on AWS (EKS)
 
+## Overview
 
-“The application itself is intentionally simple.
-The goal of the project is to demonstrate Kubernetes operations, observability, scaling behavior, and failure handling — not application complexity.”
+This project demonstrates the design and deployment of a production-style Kubernetes platform on AWS EKS, focusing on:
+  - Infrastructure as Code (Terraform)
+  - Secure CI/CD using GitHub Actions + OIDC
+  - Clear separation of responsibilities (infra / app / monitoring)
+  - Kubernetes-native application deployment
+  - Observability with Prometheus, Alertmanager, and Grafana
+  - Minimal but meaningful alerting focused on user experience
 
+The goal of this project is architectural clarity and operational correctness, not feature overload.
 
+---
 
-“Each GitHub Actions job runs in an isolated environment, so kubeconfig must be generated in every workflow that interacts with the cluster.”
+## High-Level Architecture
 
+The platform consists of the following layers:
 
+### AWS Infrastructure
 
-Second GitHub workflow (deploy-app.yml):
+  - VPC with public and private subnets
+  - Internet Gateway + NAT Gateway
+  - EKS Cluster (managed control plane)
+  - EKS Node Group (EC2 worker nodes)
+
+### Kubernetes Platform
+
+  - Application deployed via Deployment / Service / Ingress
+  - AWS Load Balancer Controller for ALB integration
+  - RBAC enforcing least privilege
+
+### CI/CD
+
+  - GitHub Actions with OIDC (no static credentials)
+  - Separate workflows for infra, app, and monitoring
+
+### Monitoring
+
+  - Prometheus (metrics collection)
+  - Alertmanager (alert routing)
+  - Grafana (visualization)
+  - kube-prometheus-stack via Helm
+
+Prometheus Operator continuously reconciles Prometheus configuration with cluster state, eliminating manual target management and static configuration.
+
+---
+
+## CI/CD Design
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+|Workflows           	  |  Responsibility                                |  IAM Role                       |
+|───────────────────────|────────────────────────────────────────────────|─────────────────────────────────|
+|deploy-infra.yml	      |  Provision infrastructure & bootstrap cluster	 |  kubernetes-ci-infra-role       |
+|deploy-app.yml	        |  Deploy application resources	                 |  kubernetes-ci-app-role         |
+|deploy-monitoring.yml  |  Deploy monitoring stack	                     |  kubernetes-ci-monitoring-role  |
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+Each workflow:
+
+  - Uses GitHub OIDC to assume an IAM role
+  - Generates a temporary kubeconfig
+  - Operates only within its allowed scope
+
+No credentials or kubeconfig files are stored in the repository.
+
+---
+
+## Security Model
+
+### IAM → Kubernetes Mapping
+
+  - AWS IAM roles are mapped to Kubernetes users/groups using the aws-auth ConfigMap
+  - Kubernetes does not understand IAM directly
+  - Authorization is enforced using RBAC
+
+### Separation of Concerns
+
+  - Infra role: bootstrap access only, used once
+  - App role: can manage Deployments, Services, Ingresses (namespace-scoped)
+  - Monitoring role: can install Helm charts and monitoring CRDs
+
+No workflow has unnecessary cluster-admin privileges.
+
+---
+
+## Application Deployment
+
+The application is deployed using standard Kubernetes primitives:
+
+* Deployment: manages pod replicas
+* Service (ClusterIP): internal load balancing
+* Ingress (ALB): external HTTP access
+
+Endpoints:
+
+* /health – exposed publicly via ALB
+* /metrics – internal only, consumed by Prometheus
+
+This design prevents metrics exposure to the public internet
+
+---
+
+## Monitoring Architecture
+
+Monitoring is deployed using kube-prometheus-stack (Prometheus Operator).
+
+Components
+
+  - Prometheus – scrapes metrics
+  - Alertmanager – handles alerts
+  - Grafana – dashboards
+  - node-exporter – node-level metrics
+  - kube-state-metrics – Kubernetes object state
+
+All components run inside the cluster.
+
+Grafana is accessed via kubectl port-forward, not Ingress
+
+---
+
+## Alerting Strategy
+
+This project intentionally defines a single alert:
+
+HighRequestLatency
+
+  - Purpose: Detect degraded user experience caused by slow responses.
+  - Logic: Alert when the 95th percentile request latency exceeds 1 second for more than 3 minutes
+
+```yaml
+histogram_quantile(
+  0.95,
+  rate(http_request_duration_seconds_bucket[5m])
+) > 1
+```
+
+Thresholds are intentionally conservative to avoid alerting on transient spikes.
+
+---
+
+## Deployment Order (Execution Plan)
+
+1. deploy-infra
+
+    - Provision AWS infrastructure
+    - Create EKS cluster and node group
+    - Configure aws-auth and RBAC
+
+2. deploy-app
+
+   - Deploy application (Deployment, Service, Ingress)
+
+3. deploy-monitoring
+
+    - Install monitoring stack via Helm
+    - Apply ServiceMonitors and alert rules
+
+Deployment is intentionally planned to run once, not iteratively
+
+---
+
+## What This Project Demonstrates
+
+* Real-world EKS platform design
+* Secure CI/CD with GitHub Actions + OIDC
+* Practical Kubernetes RBAC usage
+* Thoughtful monitoring and alerting
+* Senior-level architectural reasoning
+
+---
+
+## Diagram
+
+### High Level Architecture
+```text
+┌───────────────────────────────────────────────────────────────────────────────────────┐
+│                                   GitHub Actions                                      │
+│                                                                                       │
+│    ┌───────────────┐            ┌────────────────┐            ┌──────────────┐        │ 
+│    │ deploy-infra  │            │ deploy-app     │            │ deploy-mon   │        │
+│    │ (Terraform)   │            │ (kubectl)      │            │ (Helm)       │        │
+│    └───────┬───────┘            └───────┬────────┘            └───────┬──────┘        │
+│            │                            │                             │               │
+│     Assume IAM role              Assume IAM role               Assume IAM role        │
+|(kubernetes-ci-infra-role)    (kubernetes-ci-app-role)  (kubernetes-ci-monitoring-role)|
+│            │                            │                             │               │
+└────────────┼────────────────────────────┼─────────────────────────────┼───────────────┘
+             │                            │                             │
+             ▼                            ▼                             ▼
+┌───────────────────────────────────────────────────────────────────────────────────────┐
+│                                    AWS Account                                        │
+│                                                                                       │
+│             ┌───────────────────────────────────────────────────────┐                 │
+│             │                          VPC                          │                 │
+│             │                                                       │                 │
+│             │  ┌──────────────┐                   ┌──────────────┐  │                 │
+│             │  │ Public Subnet│                   │ PrivateSubnet│  │                 │
+│             │  │              │                   │              │  │                 │
+│             │  │  ALB         │                   │  EKS Nodes   │  │                 │
+│             │  │  (Ingress)   │                   │              │  │                 │
+│             │  └──────┬───────┘                   └──────┬───────┘  │                 │
+│             │         │                                  │          │                 │
+│             │         ▼                                  ▼          │                 │
+│             │   Internet Users                    Kubernetes Pods   │                 │
+│             │                                                       │                 │
+│             └───────────────────────────────────────────────────────┘                 │
+│                                                                                       │
+│             ┌───────────────────────────────────────────────────────┐                 │
+│             │                  EKS Control Plane                    │                 │
+│             │   (API Server – Managed by AWS)                       │                 │
+│             └───────────────────────────────────────────────────────┘                 │
+└───────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Application Data Flow
+```text
+User Browser
+     │
+     ▼
+AWS ALB (Ingress Controller)
+     │
+     ▼
+Kubernetes Service
+     │
+     ▼
+Application Pods (Flask)
+     │
+     ├── /health   (public via ALB)
+     └── /metrics  (internal only)
+```
+
+### Monitoring Data Flow
+```text
+Application Pod
+   └── exposes /metrics
+           │
+           ▼
+Prometheus (inside cluster)
+           │
+           ▼
+Alertmanager
+           │
+           ▼
+Slack / Notification
+
+Grafana
+   ▲
+   │ queries
+   │
+Prometheus
+```
+
+No Ingress for Prometheus / Grafana
+Grafana accessed via kubectl port-forward
+
+### Control Plane & Auth Flow
+```text
+kubectl / helm
+     │
+     │ aws eks update-kubeconfig
+     ▼
+EKS API Server
+     │
+     │ verifies IAM token (STS)
+     ▼
+aws-auth ConfigMap
+     │
+     │ maps IAM → Kubernetes groups
+     ▼
+RBAC (Role / ClusterRole)
+     │
+     ▼
+Allowed / Denied action
+```
+
+### CI/CD Responsibility Boundaries
+```text
+┌──────────────────────────────┐
+│ deploy-infra.yml             │
+│ IAM: kubernetes-ci-infra     │
+│                              │
+│ - Terraform                  │
+│ - EKS cluster                │
+│ - Node groups                │
+│ - aws-auth                   │
+│ - RBAC                       │
+│ (bootstrap admin only)       │
+└─────────────┬────────────────┘
+              │
+              ▼
+┌──────────────────────────────┐
+│ deploy-app.yml               │
+│ IAM: kubernetes-ci-app       │
+│                              │
+│ - Deployment                 │
+│ - Service                    │
+│ - Ingress                    │
+│ (NO cluster-admin)           │
+└─────────────┬────────────────┘
+              │
+              ▼
+┌──────────────────────────────┐
+│ deploy-monitoring.yml        │
+│ IAM: kubernetes-ci-monitoring│
+│                              │
+│ - Helm install monitoring    │
+│ - ServiceMonitors            │
+│ - Alerts                     │
+│ (monitoring scope only)      │
+└──────────────────────────────┘
+```
+
+### Second GitHub workflow (deploy-app.yml):
+```text
 GitHub Actions
   ↓ (OIDC)
 IAM Role (app-deploy-ci-role)
@@ -20,45 +325,15 @@ Kubernetes User = github-actions
 Role (namespace-scoped, limited)
   ↓
 kubectl apply works
+``` 
 
+---
 
-Bootstrap IAM role 
-“We use a shared IAM policy for EKS authentication
-and enforce all authorization boundaries at the Kubernetes RBAC layer.”
+## Notes
 
-RBAC:
+* TLS termination was intentionally omitted as it was already demonstrated in a previous HA WordPress project using CloudFront and multi-ALB ACM certificates.
+* The application itself is intentionally simple. The goal of the project is to demonstrate Kubernetes operations, observability, scaling behavior, and failure handling — not application complexity.
+* Persistent storage is intentionally omitted in this project to keep the focus on architecture, security, and observability design. In production, Prometheus would be backed by persistent volumes or long-term storage solutions such as Thanos.
 
-## CI/CD Security Model
+---
 
-- GitHub Actions uses OIDC with AWS IAM roles.
-- Infrastructure and application delivery are separated.
-- Application pipeline is restricted via Kubernetes RBAC (no cluster-admin).
-
-“I mapped the GitHub Actions IAM role to a dedicated Kubernetes group and bound it to a namespace-scoped Role with only deployment-related permissions.”
-
-What can GitHub action do?
-✔ kubectl apply -f deployment.yaml
-✔ kubectl apply -f service.yaml
-✔ kubectl apply -f ingress.yaml
-
-❌ kubectl delete namespace default
-❌ kubectl get nodes
-❌ kubectl edit aws-auth
-❌ kubectl apply CRDs
-
-“I explicitly avoided using cluster-admin.
-I mapped the GitHub Actions IAM role to a dedicated Kubernetes group and bound it to a namespace-scoped Role with minimal permissions required for application delivery.”
-
-
-
-
-
-
-Prometheus
-
-Prometheus discovers targets via Kubernetes API,
-but scrapes metrics directly from HTTP endpoints exposed by each component.
-
-“Persistent storage is intentionally omitted in this project to keep the focus on architecture, security, and observability design. In production, Prometheus would be backed by persistent volumes or long-term storage solutions such as Thanos.”
-
-“We use Prometheus Operator because Kubernetes is declarative and dynamic, and Operator keeps Prometheus configuration in sync with cluster state.”
