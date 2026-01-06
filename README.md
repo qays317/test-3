@@ -334,6 +334,18 @@ kubectl apply works
 * TLS termination was intentionally omitted as it was already demonstrated in a previous HA WordPress project using CloudFront and multi-ALB ACM certificates.
 * The application itself is intentionally simple. The goal of the project is to demonstrate Kubernetes operations, observability, scaling behavior, and failure handling — not application complexity.
 * Persistent storage is intentionally omitted in this project to keep the focus on architecture, security, and observability design. In production, Prometheus would be backed by persistent volumes or long-term storage solutions such as Thanos.
+* Why the monitoring CI role needs cluster-admin
 
+  The deploy-monitoring workflow uses Helm to install kube-prometheus-stack (Prometheus Operator + CRDs + Grafana + Alertmanager).
+Helm does not only “deploy Prometheus pods”. During an install/upgrade it performs Kubernetes API operations such as:
+    - listing/creating/updating Secrets (release state stored as Secrets, and chart resources may also create Secrets)
+    - creating/updating ConfigMaps
+    - creating CustomResourceDefinitions (CRDs) and cluster-scoped resources
+    - creating RBAC objects (ServiceAccounts / Roles / ClusterRoles / Bindings)
+    - installing webhooks and other components that operate cluster-wide
+
+  Because of that, giving the monitoring workflow only “read-only monitoring permissions” is not enough — Helm itself needs broad permissions, especially on secrets inside the monitoring namespace, and often cluster-scoped rights for CRDs.
+For this project, the monitoring pipeline is intentionally granted cluster-admin, but it is isolated in its own IAM role + Kubernetes group, separate from the application deploy workflow.
+This keeps the application workflow least-privileged while allowing monitoring to be installed correctly
 ---
 

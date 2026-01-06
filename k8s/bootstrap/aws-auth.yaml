@@ -22,3 +22,15 @@ data:
       username: ci:monitoring
       groups:
         - monitoring-admins
+
+    - rolearn: arn:aws:iam::ACCOUNT_ID:role/eks-node-role
+      username: system:node:{{EC2PrivateDNSName}}
+      groups:
+        - system:bootstrappers
+        - system:nodes
+
+  mapUsers: |
+    - userarn: arn:aws:iam::ACCOUNT_ID:user/production-cli-user
+      username: local-admin
+      groups:
+        - system:masters
