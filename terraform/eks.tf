@@ -10,8 +10,6 @@ resource "aws_eks_cluster" "this" {
 
   tags = {
     Name = "${var.cluster_name}"
-    "kubernetes.io/role/elb" = "1"
-    "kubernetes.io/cluster/eks-cluster" = "shared"
   }
 
   depends_on = [

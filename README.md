@@ -347,5 +347,14 @@ Helm does not only “deploy Prometheus pods”. During an install/upgrade it pe
   Because of that, giving the monitoring workflow only “read-only monitoring permissions” is not enough — Helm itself needs broad permissions, especially on secrets inside the monitoring namespace, and often cluster-scoped rights for CRDs.
 For this project, the monitoring pipeline is intentionally granted cluster-admin, but it is isolated in its own IAM role + Kubernetes group, separate from the application deploy workflow.
 This keeps the application workflow least-privileged while allowing monitoring to be installed correctly
+* Root Cause Analysis – ALB Creation Failure
+
+  The AWS Load Balancer Controller relies on IRSA (IAM Roles for Service Accounts).
+After rebuilding the EKS cluster, the OIDC provider ID changed.
+  The IAM role trust policy for the controller was still referencing the old OIDC provider ARN, causing STS to reject AssumeRoleWithWebIdentity.
+
+  Although Kubernetes resources (Ingress, Service, Pods) were valid, AWS rejected all ELB API calls, preventing ALB creation.
+
+  The issue was resolved by dynamically referencing the cluster OIDC provider using Terraform data sources instead of hardcoding the ARN.
 ---
 
