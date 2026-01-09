@@ -37,6 +37,9 @@ kubectl apply -f k8s/rbac/app-role.yaml
 kubectl apply -f k8s/rbac/monitoring-cluster-role.yaml
 kubectl apply -f k8s/rbac/rolebinding.yaml
 kubectl apply -f k8s/bootstrap/alb-controller-serviceaccount.yaml
+kubectl apply -f k8s/rbac/monitoring-helm-role.yaml
+kubectl apply -f k8s/rbac/monitoring-helm-rolebinding.yaml
+
 
 helm repo add eks https://aws.github.io/eks-charts
 helm repo update
