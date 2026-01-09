@@ -118,28 +118,26 @@ locals {
 }
 
 resource "aws_iam_role" "alb_controller" {
-  name = "${var.project_name}-alb-controller-role"
-
+  name = "eks-alb-controller-role"
   assume_role_policy = jsonencode({
-  "Version": "2012-10-17",
-  "Statement": [
+  Version = "2012-10-17"
+  Statement = [
     {
-      "Effect": "Allow",
-      "Principal": {
-        "Federated": "arn:aws:iam::<ACCOUNT_ID>:oidc-provider/oidc.eks.us-east-1.amazonaws.com/id/4CBC0D5018D449559EE30462AA4AEE44"
-      },
-      "Action": "sts:AssumeRoleWithWebIdentity",
-      "Condition": {
-        "StringEquals": {
-          "${local.oidc_provider}:sub": "system:serviceaccount:kube-system:aws-load-balancer-controller",
-          "${local.oidc_provider}:aud": "sts.amazonaws.com"
+      Effect = "Allow"
+      Principal = {
+        Federated = aws_iam_openid_connect_provider.eks.arn
+      }
+      Action = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "${local.oidc_provider}:sub" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
+          "${local.oidc_provider}:aud" = "sts.amazonaws.com"
         }
       }
     }
   ]
-}
+})
 
-  )
 }
 
 resource "aws_iam_role_policy_attachment" "alb_attach" {
