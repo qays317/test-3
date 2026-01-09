@@ -38,6 +38,15 @@ kubectl apply -f k8s/rbac/monitoring-cluster-role.yaml
 kubectl apply -f k8s/rbac/rolebinding.yaml
 kubectl apply -f k8s/bootstrap/alb-controller-serviceaccount.yaml
 
+helm repo add eks https://aws.github.io/eks-charts
+helm repo update
+
+helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
+-n kube-system \
+--set clusterName=$CLUSTER_NAME \
+--set serviceAccount.create=false \
+--set serviceAccount.name=aws-load-balancer-controller
+
 
 # 4. Verify
 kubectl get nodes
