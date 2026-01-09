@@ -46,10 +46,10 @@ jobs:
             prometheus-community/kube-prometheus-stack \
             --namespace monitoring \
             --create-namespace \
-            -f monitoring/values.yaml
+            -f k8s/monitoring/values.yaml
       # 7. ServiceMonitoring
       - name: Apply ServiceMonitors
-        run: kubectl apply -f monitoring/servicemonitors/
+        run: kubectl apply -f k8s/monitoring/servicemonitors/
       # 8. Apply alerts
       - name: Apply alert rules
-        run: kubectl apply -f monitoring/alerts/
+        run: kubectl apply -f k8s/monitoring/alerts/
