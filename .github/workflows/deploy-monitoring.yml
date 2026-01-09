@@ -35,6 +35,10 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v4
       # 5. Add Prometheus Helm repository
+      - name: Apply monitoring helm RBAC
+        run: |
+          kubectl apply -f k8s/rbac/monitoring-helm-role.yaml
+          kubectl apply -f k8s/rbac/monitoring-helm-rolebinding.yaml
       - name: Add Helm repo
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
