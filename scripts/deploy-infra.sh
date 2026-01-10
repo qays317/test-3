@@ -45,7 +45,7 @@ kubectl apply -f k8s/rbac/app-rolebinding.yaml
 
 # 6. Controllers
 kubectl apply -f k8s/bootstrap/alb-controller-serviceaccount.yaml
-
+helm upgrade --install monitoring prometheus-community/kube-prometheus-stack ...
 helm repo add eks https://aws.github.io/eks-charts
 helm repo update
 
