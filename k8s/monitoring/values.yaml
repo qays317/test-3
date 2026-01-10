@@ -3,12 +3,20 @@
 # ------------------------
 namespaceOverride: monitoring
 
+rbac:
+  create: false
+
 # ------------------------
 # Prometheus
 # ------------------------
 prometheus:
+  enabled: true
+
+  rbac:
+    create: false
+
   prometheusSpec:
-    replicas: 1                
+    replicas: 1
     retention: 12h
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
@@ -18,6 +26,10 @@ prometheus:
 # ------------------------
 alertmanager:
   enabled: true
+
+  rbac:
+    create: false
+
   config:
     global:
       resolve_timeout: 5m
@@ -43,6 +55,10 @@ alertmanager:
 # ------------------------
 grafana:
   enabled: true
+
+  rbac:
+    create: false
+
   adminPassword: admin
   defaultDashboardsEnabled: true
 
@@ -52,8 +68,14 @@ grafana:
 nodeExporter:
   enabled: true
 
+  rbac:
+    create: false
+
 # ------------------------
 # kube-state-metrics
 # ------------------------
 kubeStateMetrics:
   enabled: true
+
+  rbac:
+    create: false
