@@ -40,7 +40,6 @@ kubectl apply -f k8s/rbac/app-role.yaml
 kubectl apply -f k8s/rbac/app-rolebinding.yaml
 kubectl apply -f k8s/rbac/monitoring-cluster-role.yaml
 kubectl apply -f k8s/rbac/monitoring-helm-role.yaml
-kubectl apply -f k8s/rbac/monitoring-helm-rolebinding.yaml
 
 # 6. ALB Controller
 kubectl apply -f k8s/bootstrap/alb-controller-serviceaccount.yaml
