@@ -356,5 +356,21 @@ After rebuilding the EKS cluster, the OIDC provider ID changed.
   Although Kubernetes resources (Ingress, Service, Pods) were valid, AWS rejected all ELB API calls, preventing ALB creation.
 
   The issue was resolved by dynamically referencing the cluster OIDC provider using Terraform data sources instead of hardcoding the ARN.
+* We initially attempted to protect the /metrics endpoint using custom HTTP headers (e.g. X-Prometheus) at the application level.
+  However, this approach does not work reliably with ALB Ingress, because:
+
+    - ALB forwards all paths to the backend service
+    - It does not support request filtering or header-based access control
+    - Any user can still reach /metrics if the endpoint is exposed on the same service
+
+  To solve this correctly, we changed the architecture:
+
+    - The application and metrics are exposed on different ports
+    - Two separate Kubernetes Services are used:
+        - app-service → public traffic via ALB
+        - metrics-service → internal-only access for Prometheus
+    - The /metrics endpoint is never exposed via Ingress
+  
+  This approach ensures metrics are not publicly reachable by design, rather than relying on application-level checks
 ---
 
