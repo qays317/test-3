@@ -45,6 +45,7 @@ jobs:
           helm upgrade --install monitoring \
             prometheus-community/kube-prometheus-stack \
             --namespace monitoring \
+            --set crds.enabled=false \
             --create-namespace \
             -f k8s/monitoring/values.yaml
       # 7. ServiceMonitoring
