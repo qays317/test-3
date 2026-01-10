@@ -4,13 +4,12 @@ metadata:
   name: monitoring-helm-role
   namespace: monitoring
 rules:
+  # Helm needs to read & manage these core objects
   - apiGroups: [""]
     resources:
+      - serviceaccounts
       - secrets
       - configmaps
-      - services
-      - endpoints
-      - pods
     verbs:
       - get
       - list
@@ -20,16 +19,30 @@ rules:
       - patch
       - delete
 
+  # Helm-managed workload resources
   - apiGroups: ["apps"]
     resources:
       - deployments
       - statefulsets
       - daemonsets
-    verbs: ["*"]
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
 
-  - apiGroups: ["monitoring.coreos.com"]
+  # Services
+  - apiGroups: [""]
     resources:
-      - servicemonitors
-      - podmonitors
-      - prometheusrules
-    verbs: ["*"]
+      - services
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
