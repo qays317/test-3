@@ -39,15 +39,7 @@ jobs:
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
           helm repo update
-      # 6. Deploy kube-prometheus-stack
-      - name: Deploy monitoring stack
-        run: |
-          helm upgrade --install monitoring \
-            prometheus-community/kube-prometheus-stack \
-            --namespace monitoring \
-            --set crds.enabled=false \
-            --create-namespace \
-            -f k8s/monitoring/values.yaml
+
       # 7. ServiceMonitoring
       - name: Apply ServiceMonitors
         run: kubectl apply -f k8s/monitoring/servicemonitors/
