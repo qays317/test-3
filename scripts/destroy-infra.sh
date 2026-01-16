@@ -3,8 +3,11 @@
 set -e
 source "$(dirname "$0")/config.sh"
 
+# 1. Kubernetes resources that create AWS infra 
+kubectl delete ingress --all || true
+kubectl delete svc --all || true
 
-# 1. Terraform
+# 2. Terraform
 terraform -chdir="terraform" init -reconfigure -upgrade \
     -backend-config="bucket=$TF_STATE_BUCKET_NAME" \
     -backend-config="key=EKS-project/terraform.tfstate" \
