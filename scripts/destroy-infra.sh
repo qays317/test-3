@@ -4,6 +4,7 @@ set -e
 source "$(dirname "$0")/config.sh"
 
 # 1. Kubernetes resources that create AWS infra 
+aws eks update-kubeconfig --name eks-cluster --region us-east-1
 kubectl delete ingress --all || true
 kubectl delete svc --all || true
 
