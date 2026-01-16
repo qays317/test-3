@@ -9,6 +9,8 @@ aws eks update-kubeconfig \
   --name $CLUSTER_NAME
 kubectl delete ingress --all || true
 kubectl delete svc --all || true
+echo "Waiting for AWS to clean up ENIs..."
+sleep 90
 
 # 2. Terraform
 terraform -chdir="terraform" init -reconfigure -upgrade \
